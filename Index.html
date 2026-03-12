@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>언더더월드 × 부모 돌봄 — 데이터 사일로 솔루션</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;700;900&family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0b;
+    --paper: #f5f0e8;
+    --warm: #c8a96e;
+    --accent: #d45f3c;
+    --muted: #8a7f72;
+    --layer1: #2a3a2e;
+    --layer2: #4a6fa5;
+    --layer3: #9b5ea2;
+    --slide-w: 100vw;
+    --slide-h: 100vh;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--ink);
+    font-family: 'Noto Serif KR', serif;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed; width: 12px; height: 12px;
+    background: var(--warm); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transition: transform 0.15s ease;
+    mix-blend-mode: difference;
+  }
+
+  /* ===================== SLIDE SYSTEM ===================== */
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(30px);
+    overflow: hidden;
+  }
+
+  .slide.active {
+    opacity: 1; pointer-events: all;
+    transform: translateY(0);
+  }
+
+  /* ===================== NAV ===================== */
+  .nav {
+    position: fixed; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: center;
+    z-index: 100; background: rgba(15,14,11,0.7);
+    padding: 10px 24px; border-radius: 40px;
+    border: 1px solid rgba(200,169,110,0.3);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .nav-dot.active { background: var(--warm); transform: scale(1.5); }
+
+  .nav-btn {
+    background: none; border: 1px solid var(--warm);
+    color: var(--warm); padding: 6px 16px; border-radius: 20px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.1em;
+  }
+  .nav-btn:hover { background: var(--warm); color: var(--ink); }
+
+  .slide-counter {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: 0.1em;
+    min-width: 40px; text-align: center;
+  }
+
+  /* ===================== SLIDE 01 — COVER ===================== */
+  #s1 {
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cover-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%; height: 100%;
+  }
+
+  .cover-left {
+    display: flex; flex-direction: column;
+    justify-content: center; padding: 80px 60px;
+    border-right: 1px solid rgba(200,169,110,0.2);
+    position: relative;
+  }
+
+  .cover-left::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(200,169,110,0.07) 0%, transparent 70%);
+  }
+
+  .cover-tag {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warm); letter-spacing: 0.2em;
+    text-transform: uppercase; margin-bottom: 32px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .cover-tag::before {
+    content: ''; width: 40px; height: 1px; background: var(--warm);
+  }
+
+  .cover-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(48px, 6vw, 88px);
+    font-weight: 900; color: var(--paper);
+    line-height: 0.95; letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+
+  .cover-title em {
+    font-style: italic; color: var(--warm);
+    display: block;
+  }
+
+  .cover-sub {
+    font-size: 15px; color: var(--muted);
+    line-height: 1.8; max-width: 400px;
+    font-weight: 300;
+  }
+
+  .cover-right {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 60px;
+    position: relative;
+  }
+
+  .silo-visual {
+    display: flex; flex-direction: column; gap: 16px;
+    width: 100%; max-width: 320px;
+  }
+
+  .silo-item {
+    border: 1px solid rgba(138,127,114,0.4);
+    border-radius: 8px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden;
+    animation: siloFloat 3s ease-in-out infinite;
+  }
+  .silo-item:nth-child(2) { animation-delay: 0.5s; }
+  .silo-item:nth-child(3) { animation-delay: 1s; }
+  .silo-item:nth-child(4) { animation-delay: 1.5s; }
+
+  @keyframes siloFloat {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+
+  .silo-icon { font-size: 22px; }
+  .silo-label {
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--muted); letter-spacing: 0.05em;
+  }
+  .silo-val { font-size: 13px; color: var(--paper); margin-top: 2px; }
+  .silo-lock {
+    margin-left: auto; font-size: 16px; color: var(--accent); opacity: 0.8;
+  }
+
+  .disconnect-lines {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+
+  .cover-year {
+    position: absolute; bottom: 40px; right: 40px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: rgba(138,127,114,0.5); letter-spacing: 0.1em;
+  }
+
+  /* ===================== SLIDE 02 — PROBLEM ===================== */
+  #s2 {
+    background: var(--paper);
+    display: grid; grid-template-columns: 360px 1fr;
+  }
+
+  .problem-sidebar {
+    background: var(--ink); padding: 60px 40px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+
+  .slide-num {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: rgba(200,169,110,0.6); letter-spacing: 0.2em;
+  }
+
+  .sidebar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px; font-weight: 900;
+    color: var(--paper); line-height: 1.1;
+  }
+  .sidebar-title span { color: var(--accent); display: block; }
+
+  .sidebar-desc {
+    font-size: 13px; color: var(--muted);
+    line-height: 1.9; font-weight: 300;
+  }
+
+  .problem-main {
+    padding: 60px; display: flex;
+    flex-direction: column; justify-content: center;
+    gap: 28px;
+  }
+
+  .problem-cards {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .prob-card {
+    background: white; border-radius: 12px;
+    padding: 28px 24px; position: relative;
+    border: 1px solid #e8e0d4;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .prob-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.1); }
+
+  .prob-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px; font-weight: 900;
+    color: #f0ebe2; position: absolute;
+    top: 10px; right: 16px; line-height: 1;
+  }
+
+  .prob-icon { font-size: 28px; margin-bottom: 12px; }
+
+  .prob-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--ink); margin-bottom: 8px;
+  }
+
+  .prob-desc {
+    font-size: 12px; color: var(--muted);
+    line-height: 1.8; font-weight: 300;
+  }
+
+  .prob-tag {
+    display: inline-block; margin-top: 10px;
+    background: var(--accent); color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; padding: 3px 10px; border-radius: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ===================== SLIDE 03 — INSIGHT ===================== */
+  #s3 {
+    background: var(--ink);
+    display: flex; align-items: stretch;
+  }
+
+  .insight-wrap {
+    width: 100%; display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  .insight-header {
+    padding: 60px 80px 40px;
+    border-bottom: 1px solid rgba(200,169,110,0.15);
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+
+  .insight-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px; font-weight: 900;
+    color: var(--paper); line-height: 1;
+  }
+  .insight-header h2 em { color: var(--warm); font-style: italic; }
+
+  .insight-body {
+    padding: 50px 80px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 2px;
+  }
+
+  .insight-col {
+    padding: 40px 32px; border-right: 1px solid rgba(200,169,110,0.1);
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .insight-col:last-child { border-right: none; }
+
+  .col-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--warm); letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .col-quote {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 400; font-style: italic;
+    color: var(--paper); line-height: 1.5;
+  }
+
+  .col-detail {
+    font-size: 12px; color: var(--muted);
+    line-height: 1.9; font-weight: 300;
+  }
+
+  .col-pain {
+    margin-top: auto;
+    background: rgba(212,95,60,0.12);
+    border: 1px solid rgba(212,95,60,0.3);
+    border-radius: 8px; padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  /* ===================== SLIDE 04 — SOLUTION ===================== */
+  #s4 {
+    background: var(--paper);
+    display: grid; grid-template-rows: 1fr;
+  }
+
+  .solution-wrap {
+    display: grid; grid-template-columns: 1fr 1fr;
+    height: 100%;
+  }
+
+  .solution-left {
+    background: var(--layer1); padding: 70px 60px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 32px; position: relative; overflow: hidden;
+  }
+
+  .solution-left::before {
+    content: '';
+    position: absolute; width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(74,111,165,0.2) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+  }
+
+  .sol-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warm); letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .sol-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px; font-weight: 900;
+    color: var(--paper); line-height: 1.05;
+  }
+  .sol-title em { color: var(--warm); font-style: italic; }
+
+  .sol-desc {
+    font-size: 14px; color: rgba(245,240,232,0.65);
+    line-height: 2; font-weight: 300; max-width: 380px;
+  }
+
+  .sol-layers {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-top: 8px;
+  }
+
+  .layer-pill {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    transition: all 0.3s;
+  }
+  .layer-pill:hover { background: rgba(255,255,255,0.09); }
+
+  .layer-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .l1 { background: #5cb87a; }
+  .l2 { background: var(--layer2); }
+  .l3 { background: var(--layer3); }
+
+  .layer-name {
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--paper); letter-spacing: 0.05em;
+  }
+  .layer-role { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .solution-right {
+    padding: 70px 60px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 24px;
+  }
+
+  .sol-right-title {
+    font-size: 14px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .flow-step {
+    display: flex; gap: 20px; align-items: flex-start;
+  }
+
+  .step-num {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warm); width: 24px; flex-shrink: 0; margin-top: 2px;
+  }
+
+  .step-content {}
+  .step-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .step-desc { font-size: 12px; color: var(--muted); line-height: 1.8; font-weight: 300; }
+
+  .flow-divider {
+    width: 1px; height: 20px; background: #e0d8cc;
+    margin-left: 12px;
+  }
+
+  /* ===================== SLIDE 05 — 3-LAYER ARCHITECTURE ===================== */
+  #s5 {
+    background: #0a0e1a;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0; padding: 0;
+  }
+
+  .arch-header {
+    width: 100%; padding: 40px 80px 30px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .arch-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px; font-weight: 900; color: var(--paper);
+  }
+  .arch-title span { color: var(--warm); }
+
+  .arch-badge {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--layer2); border: 1px solid rgba(74,111,165,0.4);
+    padding: 6px 16px; border-radius: 20px; letter-spacing: 0.1em;
+  }
+
+  .arch-layers {
+    width: 100%; flex: 1;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .arch-layer {
+    padding: 44px 52px;
+    border-right: 1px solid rgba(255,255,255,0.04);
+    display: flex; flex-direction: column; gap: 20px;
+    position: relative; overflow: hidden;
+  }
+  .arch-layer:last-child { border-right: none; }
+
+  .arch-layer::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .arch-layer.l1-bg::before { background: #5cb87a; }
+  .arch-layer.l2-bg::before { background: var(--layer2); }
+  .arch-layer.l3-bg::before { background: var(--layer3); }
+
+  .arch-layer.l1-bg { background: rgba(92,184,122,0.04); }
+  .arch-layer.l2-bg { background: rgba(74,111,165,0.04); }
+  .arch-layer.l3-bg { background: rgba(155,94,162,0.04); }
+
+  .arch-layer-num {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .l1-bg .arch-layer-num { color: #5cb87a; }
+  .l2-bg .arch-layer-num { color: var(--layer2); }
+  .l3-bg .arch-layer-num { color: var(--layer3); }
+
+  .arch-layer-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; font-weight: 900; color: var(--paper);
+    line-height: 1.2;
+  }
+
+  .arch-layer-sub {
+    font-size: 13px; color: rgba(245,240,232,0.5);
+    font-weight: 300; line-height: 1.8;
+  }
+
+  .arch-items { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+  .arch-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: rgba(245,240,232,0.7);
+    font-family: 'DM Mono', monospace;
+  }
+  .arch-item::before {
+    content: '→'; font-size: 10px; opacity: 0.5;
+  }
+
+  .arch-example {
+    margin-top: auto;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px; padding: 14px 16px;
+    font-size: 11px; color: rgba(245,240,232,0.4);
+    line-height: 1.8; border: 1px solid rgba(255,255,255,0.06);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ===================== SLIDE 06 — UX DEMO ===================== */
+  #s6 {
+    background: var(--paper);
+    display: grid; grid-template-columns: 1fr 420px;
+  }
+
+  .ux-left {
+    padding: 60px 70px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 28px;
+  }
+
+  .ux-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warm); letter-spacing: 0.2em; text-transform: uppercase;
+  }
+
+  .ux-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 46px; font-weight: 900; color: var(--ink);
+    line-height: 1.05;
+  }
+  .ux-title em { color: var(--accent); font-style: italic; }
+
+  .ux-features { display: flex; flex-direction: column; gap: 16px; }
+
+  .ux-feat {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 20px; border-radius: 10px;
+    background: white; border: 1px solid #e8e0d4;
+    transition: all 0.3s;
+  }
+  .ux-feat:hover { border-color: var(--warm); transform: translateX(4px); }
+
+  .feat-icon { font-size: 24px; flex-shrink: 0; }
+  .feat-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .feat-desc { font-size: 12px; color: var(--muted); line-height: 1.8; font-weight: 300; }
+
+  .ux-right {
+    background: var(--ink); padding: 60px 44px;
+    display: flex; flex-direction: column;
+    justify-content: center; gap: 20px;
+  }
+
+  .phone-mockup {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(200,169,110,0.2);
+    border-radius: 20px; padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .phone-header {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--warm); letter-spacing: 0.1em;
+    padding-bottom: 12px; border-bottom: 1px solid rgba(200,169,110,0.15);
+  }
+
+  .phone-card {
+    background: rgba(255,255,255,0.06); border-radius: 10px;
+    padding: 14px 16px; border-left: 3px solid;
+  }
+  .phone-card.green { border-color: #5cb87a; }
+  .phone-card.blue { border-color: var(--layer2); }
+  .phone-card.purple { border-color: var(--layer3); }
+
+  .card-label {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .card-val { font-size: 13px; color: var(--paper); font-weight: 300; }
+  .card-time { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  .phone-alert {
+    background: rgba(212,95,60,0.1); border: 1px solid rgba(212,95,60,0.3);
+    border-radius: 10px; padding: 12px 16px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .alert-icon { font-size: 16px; }
+  .alert-text { font-size: 11px; color: var(--paper); line-height: 1.6; font-weight: 300; }
+
+  /* ===================== SLIDE 07 — VALUE PROP ===================== */
+  #s7 {
+    background: var(--ink);
+    display: flex; flex-direction: column;
+  }
+
+  .value-header {
+    padding: 56px 80px 36px;
+    border-bottom: 1px solid rgba(200,169,110,0.12);
+  }
+
+  .value-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px; font-weight: 900; color: var(--paper);
+  }
+  .value-header h2 em { color: var(--warm); font-style: italic; }
+  .value-header p { font-size: 14px; color: var(--muted); margin-top: 10px; font-weight: 300; }
+
+  .value-grid {
+    flex: 1; display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .value-card {
+    padding: 44px 36px;
+    border-right: 1px solid rgba(200,169,110,0.08);
+    display: flex; flex-direction: column; gap: 16px;
+    position: relative; overflow: hidden;
+    transition: background 0.3s;
+  }
+  .value-card:hover { background: rgba(200,169,110,0.04); }
+  .value-card:last-child { border-right: none; }
+
+  .value-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 64px; font-weight: 900;
+    color: rgba(200,169,110,0.12); position: absolute;
+    top: 20px; right: 20px; line-height: 1;
+  }
+
+  .value-icon { font-size: 32px; }
+
+  .value-title {
+    font-size: 16px; font-weight: 700; color: var(--paper);
+    line-height: 1.3;
+  }
+
+  .value-desc {
+    font-size: 12px; color: var(--muted);
+    line-height: 1.9; font-weight: 300;
+  }
+
+  .value-metric {
+    margin-top: auto;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warm);
+  }
+
+  /* ===================== SLIDE 08 — CTA ===================== */
+  #s8 {
+    background: var(--paper);
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+
+  .cta-left {
+    background: var(--ink); padding: 80px 70px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 36px; position: relative; overflow: hidden;
+  }
+
+  .cta-bg-text {
+    position: absolute; font-family: 'Playfair Display', serif;
+    font-size: 200px; font-weight: 900;
+    color: rgba(200,169,110,0.05); bottom: -30px; right: -20px;
+    line-height: 1; pointer-events: none; user-select: none;
+  }
+
+  .cta-label {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--warm); letter-spacing: 0.2em; text-transform: uppercase;
+  }
+
+  .cta-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 54px; font-weight: 900; color: var(--paper);
+    line-height: 1.05;
+  }
+  .cta-title em { color: var(--warm); font-style: italic; }
+
+  .cta-desc {
+    font-size: 14px; color: var(--muted);
+    line-height: 2; font-weight: 300; max-width: 400px;
+  }
+
+  .cta-right {
+    padding: 80px 70px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 28px;
+  }
+
+  .roadmap-title {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  .roadmap-item {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 18px 0; border-bottom: 1px solid #e8e0d4;
+  }
+  .roadmap-item:last-child { border-bottom: none; }
+
+  .rm-phase {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--warm); letter-spacing: 0.1em; white-space: nowrap;
+    margin-top: 2px; flex-shrink: 0; width: 60px;
+  }
+
+  .rm-content {}
+  .rm-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .rm-desc { font-size: 12px; color: var(--muted); line-height: 1.8; font-weight: 300; }
+
+  .rm-status {
+    margin-left: auto; flex-shrink: 0;
+    width: 8px; height: 8px; border-radius: 50%; margin-top: 6px;
+  }
+  .status-now { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .status-next { background: var(--warm); }
+  .status-future { background: var(--muted); }
+
+  /* ===================== GLOBAL ANIMS ===================== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide.active .anim {
+    animation: fadeUp 0.5s ease forwards;
+    opacity: 0;
+  }
+  .slide.active .anim:nth-child(1) { animation-delay: 0.1s; }
+  .slide.active .anim:nth-child(2) { animation-delay: 0.2s; }
+  .slide.active .anim:nth-child(3) { animation-delay: 0.3s; }
+  .slide.active .anim:nth-child(4) { animation-delay: 0.4s; }
+  .slide.active .anim:nth-child(5) { animation-delay: 0.5s; }
+  .slide.active .anim:nth-child(6) { animation-delay: 0.6s; }
+
+  /* Keyboard hint */
+  .key-hint {
+    position: fixed; top: 24px; right: 32px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: rgba(138,127,114,0.4); letter-spacing: 0.1em;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="key-hint">← → 키 또는 버튼으로 이동</div>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 01: COVER -->
+  <div class="slide active" id="s1">
+    <div class="cover-grid">
+      <div class="cover-left">
+        <div class="cover-tag anim">언더더월드 응용 기획안</div>
+        <div class="cover-title anim">
+          부모를 <em>모신다는 것</em>
+        </div>
+        <p class="cover-sub anim">
+          자식들이 겪는 돌봄 데이터 사일로 문제,<br>
+          3중 레이어 온톨로지로 해결하다.<br><br>
+          병원 기록, 약물 정보, 감정 상태, 일상 루틴 —<br>
+          흩어진 맥락을 하나의 살아있는 그래프로.
+        </p>
+      </div>
+      <div class="cover-right">
+        <div class="silo-visual anim">
+          <div class="silo-item" style="background:rgba(255,255,255,0.03)">
+            <span class="silo-icon">🏥</span>
+            <div>
+              <div class="silo-label">병원 EMR 시스템</div>
+              <div class="silo-val">혈압 138 / 콜레스테롤 높음</div>
+            </div>
+            <span class="silo-lock">🔒</span>
+          </div>
+          <div class="silo-item" style="background:rgba(255,255,255,0.03)">
+            <span class="silo-icon">💊</span>
+            <div>
+              <div class="silo-label">약국 처방 기록</div>
+              <div class="silo-val">혈압약 × 2, 관절약 × 1</div>
+            </div>
+            <span class="silo-lock">🔒</span>
+          </div>
+          <div class="silo-item" style="background:rgba(255,255,255,0.03)">
+            <span class="silo-icon">📲</span>
+            <div>
+              <div class="silo-label">자식들 카카오톡</div>
+              <div class="silo-val">"어머니 오늘 안 드셨대요"</div>
+            </div>
+            <span class="silo-lock">🔒</span>
+          </div>
+          <div class="silo-item" style="background:rgba(255,255,255,0.03)">
+            <span class="silo-icon">🧑‍⚕️</span>
+            <div>
+              <div class="silo-label">요양보호사 수첩</div>
+              <div class="silo-val">메모 → 구두 전달</div>
+            </div>
+            <span class="silo-lock">🔒</span>
+          </div>
+        </div>
+        <div class="cover-year">© 2026 UnderTheWorld Concept</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 02: PROBLEM -->
+  <div class="slide" id="s2">
+    <div class="problem-sidebar">
+      <div class="slide-num anim">02 / 08</div>
+      <div>
+        <div class="sidebar-title anim">문제<span>정의</span></div>
+        <p class="sidebar-desc anim">
+          한국의 돌봄 현장은 정보의 섬들로 가득하다.
+          아무도 전체 그림을 볼 수 없다.
+        </p>
+      </div>
+      <div style="font-family:'DM Mono',monospace; font-size:11px; color:rgba(200,169,110,0.4); letter-spacing:0.1em;">DATA SILO PROBLEM</div>
+    </div>
+    <div class="problem-main">
+      <div class="problem-cards">
+        <div class="prob-card anim">
+          <div class="prob-num">01</div>
+          <div class="prob-icon">🗂️</div>
+          <div class="prob-title">분절된 의료 기록</div>
+          <div class="prob-desc">병원마다 EMR이 달라 아들딸이 부모의 병력을 한 눈에 볼 수 없다. 응급 시 중복 투약 위험.</div>
+          <span class="prob-tag">Medical Silo</span>
+        </div>
+        <div class="prob-card anim">
+          <div class="prob-num">02</div>
+          <div class="prob-icon">💬</div>
+          <div class="prob-title">카카오톡 돌봄 로그</div>
+          <div class="prob-desc">중요한 돌봄 정보가 단톡방 카카오톡 안에 묻혀 검색도 분석도 불가능하다. 전달이 끊기면 사라진다.</div>
+          <span class="prob-tag">Chat Silo</span>
+        </div>
+        <div class="prob-card anim">
+          <div class="prob-num">03</div>
+          <div class="prob-icon">🧠</div>
+          <div class="prob-title">감정·심리 데이터 공백</div>
+          <div class="prob-desc">부모의 우울감, 수면 패턴, 기분 변화는 어디에도 기록되지 않는다. AI가 인식할 수 없는 맥락.</div>
+          <span class="prob-tag">Emotion Silo</span>
+        </div>
+        <div class="prob-card anim">
+          <div class="prob-num">04</div>
+          <div class="prob-icon">👨‍👩‍👧‍👦</div>
+          <div class="prob-title">형제 간 정보 비대칭</div>
+          <div class="prob-desc">누가 어제 어머니를 만났는지, 약을 드셨는지 — 가족 간 데이터가 각자 머릿속에만 존재한다.</div>
+          <span class="prob-tag">Family Silo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 03: INSIGHT -->
+  <div class="slide" id="s3">
+    <div class="insight-wrap">
+      <div class="insight-header">
+        <h2 class="anim">핵심 <em>인사이트</em></h2>
+        <div style="font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); max-width:300px; text-align:right; line-height:1.8;" class="anim">
+          문제의 뿌리는 데이터가 없는 게 아니라,<br>
+          관계값이 없는 것이다.
+        </div>
+      </div>
+      <div class="insight-body">
+        <div class="insight-col anim">
+          <div class="col-label">현재 상황</div>
+          <div class="col-quote">"데이터는 있다. 연결이 없다."</div>
+          <div class="col-detail">
+            병원 기록, 처방전, 가족 메시지, 보호사 메모 — 모든 데이터가 존재한다. 그러나 서로 관계를 맺지 못한다. 부모의 혈압 기록이 어제의 식사, 수면과 연결되지 않는다.
+          </div>
+          <div class="col-pain">→ 맥락 없는 데이터 = 정보 아님</div>
+        </div>
+        <div class="insight-col anim">
+          <div class="col-label">언더더월드 관점</div>
+          <div class="col-quote">"관계값을 자동 생성해야 한다."</div>
+          <div class="col-detail">
+            팔란티어의 2중 레이어는 기업 데이터를 연결한다. 언더더월드의 3중 레이어는 사람, 맥락, 모듈을 연결한다. 실시간 맥락 입력 없이 관계값을 자동 생성하는 것이 핵심 차별점이다.
+          </div>
+          <div class="col-pain">→ 3중 레이어 온톨로지 적용</div>
+        </div>
+        <div class="insight-col anim">
+          <div class="col-label">기회</div>
+          <div class="col-quote">"가장 개인적인 온톨로지."</div>
+          <div class="col-detail">
+            부모 돌봄은 극도로 개인적이고 복잡한 맥락이다. AI 에이전트가 100% 맥락을 이해해야만 진짜 도움이 된다. 환각 없는 AI 친화적 데이터 구조가 요구된다.
+          </div>
+          <div class="col-pain">→ 초개인화 에이전트의 최적 적용처</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 04: SOLUTION CONCEPT -->
+  <div class="slide" id="s4">
+    <div class="solution-wrap">
+      <div class="solution-left">
+        <div class="sol-eyebrow anim">솔루션 개요</div>
+        <div class="sol-title anim">부모님의<br><em>디지털 트윈</em></div>
+        <p class="sol-desc anim">
+          부모님 한 분 한 분의 건강, 감정, 일상, 관계를 3중 레이어 온톨로지로 표현한다. 데이터를 입력하면 관계값이 자동 생성된다.
+        </p>
+        <div class="sol-layers anim">
+          <div class="layer-pill">
+            <div class="layer-dot l1"></div>
+            <div>
+              <div class="layer-name">Layer 1 — 객체 레이어</div>
+              <div class="layer-role">사람, 병원, 약물, 증상, 이벤트</div>
+            </div>
+          </div>
+          <div class="layer-pill">
+            <div class="layer-dot l2"></div>
+            <div>
+              <div class="layer-name">Layer 2 — 관계 레이어</div>
+              <div class="layer-role">복용-처방-진단-보고-감지 관계값</div>
+            </div>
+          </div>
+          <div class="layer-pill">
+            <div class="layer-dot l3"></div>
+            <div>
+              <div class="layer-name">Layer 3 — 모듈 레이어</div>
+              <div class="layer-role">알림, 에이전트, UGC, 가족 협업</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="solution-right">
+        <div class="sol-right-title anim">작동 흐름</div>
+
+        <div class="flow-step anim">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <div class="step-title">다원 데이터 수집</div>
+            <div class="step-desc">병원 EMR 연동, 약국 QR 스캔, 요양보호사 앱 입력, 가족 음성 메모 — 모든 경로를 하나의 그래프 DB로 수렴.</div>
+          </div>
+        </div>
+        <div class="flow-divider anim"></div>
+
+        <div class="flow-step anim">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <div class="step-title">자동 관계값 생성</div>
+            <div class="step-desc">맥락 입력 없이 AI가 혈압 기록 ↔ 식사 패턴 ↔ 수면 ↔ 기분을 연결. 인과 그래프 자동 완성.</div>
+          </div>
+        </div>
+        <div class="flow-divider anim"></div>
+
+        <div class="flow-step anim">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <div class="step-title">가족 공유 & 에이전트 알림</div>
+            <div class="step-desc">형제 간 동일한 맥락 공유. AI 에이전트가 이상 패턴 감지 시 담당 가족에게 역할 기반 알림.</div>
+          </div>
+        </div>
+        <div class="flow-divider anim"></div>
+
+        <div class="flow-step anim">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <div class="step-title">전문가 레시피 연결</div>
+            <div class="step-desc">의사, 간호사, 영양사의 돌봄 레시피를 개인 온톨로지에 맞게 커스터마이징해 자동 적용.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 05: 3-LAYER ARCHITECTURE -->
+  <div class="slide" id="s5">
+    <div class="arch-header">
+      <div class="arch-title anim">3중 레이어 <span>아키텍처</span></div>
+      <div class="arch-badge anim">UnderTheWorld Core Model</div>
+    </div>
+    <div class="arch-layers">
+      <div class="arch-layer l1-bg">
+        <div class="arch-layer-num anim">Layer 01 — 객체</div>
+        <div class="arch-layer-name anim">Entity<br>Graph</div>
+        <div class="arch-layer-sub anim">존재하는 모든 것을<br>노드로 표현한다</div>
+        <div class="arch-items">
+          <div class="arch-item anim">부모님 (Person Node)</div>
+          <div class="arch-item anim">병원 / 의사 / 약사</div>
+          <div class="arch-item anim">약물 / 질병 / 증상</div>
+          <div class="arch-item anim">일상 이벤트 / 장소</div>
+          <div class="arch-item anim">감정 상태 / 수면 질</div>
+        </div>
+        <div class="arch-example anim">
+          예시:<br>
+          노드: 어머니 → 혈압약(암로디핀 5mg)<br>
+          노드: 내과 김 원장 → 처방일 2026.03.01
+        </div>
+      </div>
+
+      <div class="arch-layer l2-bg">
+        <div class="arch-layer-num anim">Layer 02 — 관계</div>
+        <div class="arch-layer-name anim">Relation<br>Matrix</div>
+        <div class="arch-layer-sub anim">노드 간 관계값을<br>자동으로 생성한다</div>
+        <div class="arch-items">
+          <div class="arch-item anim">복용 → 혈압 수치 변화</div>
+          <div class="arch-item anim">식사 패턴 ↔ 에너지 레벨</div>
+          <div class="arch-item anim">수면 시간 ↔ 기분 점수</div>
+          <div class="arch-item anim">방문 빈도 ↔ 외로움 지수</div>
+          <div class="arch-item anim">날씨 ↔ 관절통 보고</div>
+        </div>
+        <div class="arch-example anim">
+          자동 관계값:<br>
+          혈압 상승 ← 나트륨 섭취 ↑ ← 외식 빈도 ↑<br>
+          ← 자식 방문 감소 ← (추론 가능)
+        </div>
+      </div>
+
+      <div class="arch-layer l3-bg">
+        <div class="arch-layer-num anim">Layer 03 — 모듈</div>
+        <div class="arch-layer-name anim">Action<br>Module</div>
+        <div class="arch-layer-sub anim">관계값 위에서<br>에이전트가 작동한다</div>
+        <div class="arch-items">
+          <div class="arch-item anim">이상 패턴 → 역할 알림</div>
+          <div class="arch-item anim">전문가 레시피 자동 매핑</div>
+          <div class="arch-item anim">가족 대시보드 동기화</div>
+          <div class="arch-item anim">UGC: 가족 돌봄 노하우 공유</div>
+          <div class="arch-item anim">에이전트 퓨전 조합</div>
+        </div>
+        <div class="arch-example anim">
+          트리거 예시:<br>
+          혈압 3일 연속 상승 → 장녀에게 알림<br>
+          + 주치의 예약 에이전트 자동 실행
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 06: UX -->
+  <div class="slide" id="s6">
+    <div class="ux-left">
+      <div class="ux-eyebrow anim">사용자 경험</div>
+      <div class="ux-title anim">
+        가족이 쓰는<br><em>가장 쉬운</em><br>돌봄 플랫폼
+      </div>
+      <div class="ux-features">
+        <div class="ux-feat anim">
+          <div class="feat-icon">🎮</div>
+          <div>
+            <div class="feat-title">게임형 UX — 입력의 부담을 없앤다</div>
+            <div class="feat-desc">단순 탭, 이모지 선택, 음성 메모로 데이터 입력. 기록이 자동으로 온톨로지에 연결. 앱에 익숙하지 않은 어른도 사용 가능.</div>
+          </div>
+        </div>
+        <div class="ux-feat anim">
+          <div class="feat-icon">👥</div>
+          <div>
+            <div class="feat-title">역할 기반 가족 대시보드</div>
+            <div class="feat-desc">장남 = 병원 담당, 차녀 = 식사 담당. 각자의 역할에 맞는 정보만 노출. 알림도 역할에 맞게 차별화.</div>
+          </div>
+        </div>
+        <div class="ux-feat anim">
+          <div class="feat-icon">🤖</div>
+          <div>
+            <div class="feat-title">환각 없는 AI 에이전트</div>
+            <div class="feat-desc">부모님의 온톨로지 그래프를 100% 맥락으로 활용. 일반 LLM의 추측이 아닌 실제 기록 기반 제안. 신뢰할 수 있는 조언.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ux-right">
+      <div style="font-family:'DM Mono',monospace; font-size:10px; color:var(--warm); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:8px;" class="anim">Live Dashboard Preview</div>
+      <div class="phone-mockup anim">
+        <div class="phone-header">🏠 어머니 김순자 (78) — 오늘</div>
+        <div class="phone-card green">
+          <div class="card-label">혈압 (08:20)</div>
+          <div class="card-val">128 / 82 mmHg ✓</div>
+          <div class="card-time">정상 범위 · 약 복용 완료</div>
+        </div>
+        <div class="phone-card blue">
+          <div class="card-label">식사 (12:15)</div>
+          <div class="card-val">점심 — 된장찌개, 밥 반공기</div>
+          <div class="card-time">나트륨 주의 식단 ⚠️</div>
+        </div>
+        <div class="phone-card purple">
+          <div class="card-label">오늘 감정</div>
+          <div class="card-val">😊 "손녀가 와서 기분 좋다"</div>
+          <div class="card-time">보호사 입력 · 14:00</div>
+        </div>
+        <div class="phone-alert">
+          <div class="alert-icon">🔔</div>
+          <div class="alert-text">3일째 나트륨 과다 — 혈압 상승 패턴 감지.<br>장남 박민준에게 알림 발송됨.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 07: VALUE PROP -->
+  <div class="slide" id="s7">
+    <div class="value-header">
+      <h2 class="anim">왜 이게 <em>달라야 하는가</em></h2>
+      <p class="anim">기존 실버케어 앱과의 근본적 차이 — 데이터 수집이 아닌, 관계값 생성.</p>
+    </div>
+    <div class="value-grid">
+      <div class="value-card anim">
+        <div class="value-num">01</div>
+        <div class="value-icon">🕸️</div>
+        <div class="value-title">사일로를 그래프로 전환</div>
+        <div class="value-desc">분절된 의료·감정·일상 데이터를 하나의 지식 그래프로 연결. 데이터가 쌓일수록 관계값이 정교해진다.</div>
+        <div class="value-metric">→ 맥락 이해율 100%</div>
+      </div>
+      <div class="value-card anim">
+        <div class="value-num">02</div>
+        <div class="value-icon">⚡</div>
+        <div class="value-title">실시간 입력 없이 작동</div>
+        <div class="value-desc">기존 헬스케어 앱의 실패 원인 = 입력 부담. 자동 연동 + 최소 입력으로 관계값 자동 생성. 지속 가능한 데이터 증식.</div>
+        <div class="value-metric">→ 입력 부담 80% 감소</div>
+      </div>
+      <div class="value-card anim">
+        <div class="value-num">03</div>
+        <div class="value-icon">🔬</div>
+        <div class="value-title">전문가 레시피 구조화</div>
+        <div class="value-desc">의사·간호사·영양사의 돌봄 노하우를 레시피로 저장. 개인 온톨로지에 맞게 커스터마이징해 자동 적용. 복사·배포 가능.</div>
+        <div class="value-metric">→ 전문 지식의 민주화</div>
+      </div>
+      <div class="value-card anim">
+        <div class="value-num">04</div>
+        <div class="value-icon">🌐</div>
+        <div class="value-title">분산 저장 + 가족 협업</div>
+        <div class="value-desc">특정 플랫폼에 종속되지 않는 분산 구조. 가족 구성원이 UGC 방식으로 데이터를 증식. 돌봄 집단지성 형성.</div>
+        <div class="value-metric">→ 가족 사일로 해소</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 08: CTA / ROADMAP -->
+  <div class="slide" id="s8">
+    <div class="cta-left">
+      <div class="cta-bg-text">UTW</div>
+      <div class="cta-label anim">Next Step</div>
+      <div class="cta-title anim">지금<br><em>시작할 수</em><br>있는 것</div>
+      <p class="cta-desc anim">
+        언더더월드의 3중 레이어 온톨로지는 부모 돌봄이라는 극도로 개인적이고 복잡한 맥락을 다루기에 최적의 구조다. 시장 진입 전략도 명확하다.
+      </p>
+    </div>
+    <div class="cta-right">
+      <div class="roadmap-title anim">로드맵</div>
+
+      <div class="roadmap-item anim">
+        <div class="rm-phase">Phase 1</div>
+        <div class="rm-content">
+          <div class="rm-title">MVP — 가족 돌봄 로그</div>
+          <div class="rm-desc">카카오 연동 + 음성 메모로 온톨로지 노드 자동 생성. 가족 대시보드 베타. 초기 타깃: 40~50대 자녀.</div>
+        </div>
+        <div class="rm-status status-now"></div>
+      </div>
+
+      <div class="roadmap-item anim">
+        <div class="rm-phase">Phase 2</div>
+        <div class="rm-content">
+          <div class="rm-title">병원 EMR 연동 + AI 에이전트</div>
+          <div class="rm-desc">PHR(개인 건강 기록) API 연동. 이상 패턴 감지 에이전트 출시. 역할 기반 알림 시스템 고도화.</div>
+        </div>
+        <div class="rm-status status-next"></div>
+      </div>
+
+      <div class="roadmap-item anim">
+        <div class="rm-phase">Phase 3</div>
+        <div class="rm-content">
+          <div class="rm-title">전문가 레시피 마켓플레이스</div>
+          <div class="rm-desc">의사·보호사·영양사가 레시피를 올리고 수익화. UGC 기반 데이터 증식. B2B: 요양원·복지관 대시보드 공급.</div>
+        </div>
+        <div class="rm-status status-future"></div>
+      </div>
+
+      <div class="roadmap-item anim">
+        <div class="rm-phase">Phase 4</div>
+        <div class="rm-content">
+          <div class="rm-title">UTW 플랫폼 확장</div>
+          <div class="rm-desc">부모 돌봄 온톨로지를 언더더월드 메타버스 디지털 트윈 범용 플랫폼의 킬러 버티컬로 확장.</div>
+        </div>
+        <div class="rm-status status-future"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<div class="nav">
+  <button class="nav-btn" onclick="go(-1)">← Prev</button>
+  <div id="dots"></div>
+  <span class="slide-counter" id="counter">1 / 8</span>
+  <button class="nav-btn" onclick="go(1)">Next →</button>
+</div>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX - 6 + 'px';
+    cursor.style.top = e.clientY - 6 + 'px';
+  });
+
+  // Slides
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(total - 1, n));
+    slides[current].classList.add('active');
+    document.querySelectorAll('.nav-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + total;
+  }
+
+  function go(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(-1);
+  });
+
+  // Touch support
+  let tx = 0;
+  document.addEventListener('touchstart', e => tx = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1);
+  });
+</script>
+</body>
+</html>
